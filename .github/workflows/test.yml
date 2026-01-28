@@ -9,6 +9,10 @@ jobs:
   docker-test:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      pull-requests: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,6 +21,47 @@ jobs:
         run: |
           docker build -t system-quick . -f Dockerfile.run
 
-      - name: Run container (fail on exit != 0)
+      - name: Run container and capture output
+        id: run_container
         run: |
-          docker run --rm system-quick
+          set +e
+          docker run --rm system-quick > output.log 2>&1
+          status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          echo "" >> output.log
+          echo "exit code: $status" >> output.log
+          set -e
+
+      - name: Post output as PR comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const output = fs.readFileSync('output.log', 'utf8');
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: [
+                '### Docker container output',
+                '```',
+                output.slice(0, 65000),
+                '```'
+              ].join('\n')
+            });
+
+      - name: Upload container output (all runs)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-output
+          path: output.log
+
+      - name: Fail workflow if container failed
+        run: |
+          if [ "${{ steps.run_container.outputs.exit_code }}" -ne 0 ]; then
+            exit 1
+          fi
