@@ -15,7 +15,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t system-quick .
+          docker build -t system-quick . -f Dockerfile.run
 
       - name: Run container (fail on exit != 0)
         run: |
