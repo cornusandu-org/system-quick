@@ -44,13 +44,13 @@ int main() {
     printf("sysq: loading sysq_lib\n");
     void* sysq_lib = dlopen("/pboot/sysq-lib/sysqlib.so", RTLD_NOW);
     printf("sysq: obtained sysq_lib at %p\n", sysq_lib);
-    if (sysq_lib == NULL) exit(-1);
+    if (sysq_lib == NULL) exit(1);
 
     parse_so = (parse_so_fn)dlsym(sysq_lib, "parse_so");
     printf("sysq: obtained sysq_lib->parse_so at %p\n", parse_so);
-    if (parse_so == NULL) exit(-1);
+    if (parse_so == NULL) exit(1);
 
     get_files = (get_files_fn)dlsym(sysq_lib, "get_files");
     printf("sysq: obtained sysq_lib->get_files at %p\n", get_files);
-    if (get_files == NULL) exit(-1);
+    if (get_files == NULL) exit(1);
 }

@@ -88,12 +88,12 @@ int main() {
 
     if (sysq_content == NULL) {
         printf("systemqinit: mmap returned %p", sysq_content);
-        exit(-1);
+        exit(1);
     }
 
     if (memcmp(sysq_content, (const void*)"\x7f\x45\x4c\x46", 4)) {
         printf("systemqinit: invalid sysq binary; must be ELF\n");
-        exit(-1);
+        exit(1);
     }
 
     pid_t pid = fork();
