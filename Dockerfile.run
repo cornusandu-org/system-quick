@@ -1,5 +1,5 @@
 # docker build . -t system-quick -f Dockerfile.run
-# docker run --rm -it system-quick
+# docker run --rm -it system-quick --privileged
 
 FROM debian:stable-slim AS base
 
