@@ -1,0 +1,30 @@
+# docker build . -t system-quick -f Dockerfile.run
+# docker run --rm -it system-quick
+
+FROM debian:stable-slim AS base
+
+RUN apt update && \
+    apt install -y --fix-missing && \
+    apt install -y build-essential
+
+ENV container=docker
+
+COPY . .
+
+RUN make clean && make all
+
+RUN mkdir -p /pboot/systemq && \
+    mkdir -p /pboot/systemq-data && \
+    mkdir -p /pboot/sysq-lib && \
+    \
+    mv systemq /pboot/systemq/sysq && \
+    mv systemqinit /sbin/init && \
+    mv sysqlib.so /pboot/sysq-lib/sysqlib.so && \
+    \
+    chmod +x /sbin/init && \
+    chmod +x /pboot/systemq/sysq
+
+# Required for PID 1 behavior
+STOPSIGNAL SIGTERM
+
+ENTRYPOINT ["/sbin/init"]
