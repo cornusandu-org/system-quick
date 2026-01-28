@@ -1,0 +1,22 @@
+name: Docker build and test
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+jobs:
+  docker-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t system-quick .
+
+      - name: Run container (fail on exit != 0)
+        run: |
+          docker run --rm system-quick
