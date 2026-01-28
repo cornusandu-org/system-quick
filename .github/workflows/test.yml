@@ -65,3 +65,8 @@ jobs:
           if [ "${{ steps.run_container.outputs.exit_code }}" -ne 0 ]; then
             exit 1
           fi
+      
+      - name: Show last 50 lines
+        if: always()
+        run: tail -n 50 output.log
+
