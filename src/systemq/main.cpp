@@ -66,8 +66,12 @@ int main() {
 
     if (services.empty()) {
         printf("sysq: no services found\nsysq: starting bash\n");
-        if (fork()) {
-            while (reap_zombies_blocking()) {;;}
+        pid_t forked_pid = fork();
+        if (forked_pid) {
+            while (true) {
+                int status;
+                pid_t exited_pid = waitpid(-1, &status, 0);
+            }
         }
         else {
             execv("/bin/bash", (char*[]){"/bin/bash", NULL});
