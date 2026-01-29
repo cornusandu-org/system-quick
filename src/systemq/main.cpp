@@ -71,6 +71,7 @@ int main() {
             while (true) {
                 int status;
                 pid_t exited_pid = waitpid(-1, &status, 0);
+                if (exited_pid == forked_pid) exit(WEXITSTATUS(status));
             }
         }
         else {
