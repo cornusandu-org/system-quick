@@ -28,7 +28,7 @@ RUN mkdir -p /pboot/systemq && \
 
 RUN if [ "$IS_AUTO" -eq "1" ]; then \
         rm /bin/bash; \
-        cp /bin/false /bin/bash; \
+        cp /bin/true /bin/bash; \
     fi
 
 # Required for PID 1 behavior
