@@ -26,7 +26,7 @@ RUN mkdir -p /pboot/systemq && \
     chmod +x /sbin/init && \
     chmod +x /pboot/systemq/sysq
 
-RUN if [ "$IS_AUTO" -eq 1 ]; then \
+RUN if [ "$IS_AUTO" -eq "1" ]; then \
         rm /bin/bash; \
         cp /bin/false /bin/bash; \
     fi
