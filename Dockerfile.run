@@ -3,6 +3,8 @@
 
 FROM debian:stable-slim AS base
 
+ARG IS_AUTO="0"
+
 RUN apt update && \
     apt install -y --fix-missing && \
     apt install -y build-essential
@@ -23,6 +25,11 @@ RUN mkdir -p /pboot/systemq && \
     \
     chmod +x /sbin/init && \
     chmod +x /pboot/systemq/sysq
+
+RUN if [ "$IS_AUTO" -eq 1 ]; then \
+        rm /bin/bash; \
+        cp /bin/false /bin/bash
+    fi
 
 # Required for PID 1 behavior
 STOPSIGNAL SIGTERM

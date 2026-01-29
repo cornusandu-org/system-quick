@@ -19,7 +19,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t system-quick . -f Dockerfile.run
+          docker build -t system-quick . -f Dockerfile.run --build-arg IS_AUTO=1
 
       - name: Run container and capture output
         id: run_container

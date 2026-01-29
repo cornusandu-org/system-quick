@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <vector>
 #include <sys/wait.h>
+#include <sys/mman.h>
+#include <cstring>
 
 namespace fs = std::filesystem;
 
@@ -74,10 +76,13 @@ int main() {
         }
     }
 
-    ServiceMetadata* metadata = (ServiceMetadata*)calloc(services.size(), sizeof(ServiceMetadata));  // TODO: Make this use mmap() + Shared Memory
+    ServiceMetadata* metadata = (ServiceMetadata*)mmap(NULL, services.size() * sizeof(ServiceMetadata), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);  // TODO: Make this use mmap() + Shared Memory
+    memset(metadata, 0, services.size() * sizeof(ServiceMetadata));
 
     volatile size_t i = 0;
     for (std::string service_path : services) {
+        volatile const char* volatile new_path = NULL;
+        new_path = (volatile const char* volatile) mmap(NULL, _SC_PAGESIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
         pid_t read_pid = fork();
         if (read_pid) {
             int status;
@@ -88,8 +93,14 @@ int main() {
             ServiceMetadata* md = parse_so(service);
             if (!md) exit(1);
             metadata[i] = *md;
+            memcpy((void*)new_path, md->path, strlen(md->path) + 1);
+            metadata[i].path = (const char*)new_path;
             exit(0);
         }
         i++;
     }
+
+    volatile unsigned char has_started_any_service = 0;
+
+    // ...
 }
