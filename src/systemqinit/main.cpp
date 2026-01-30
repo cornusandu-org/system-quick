@@ -42,7 +42,29 @@ void reap_zombies() {
     }
 }
 
+void _onfail(int code) {
+    pid_t forked_pid = fork();
+    if (forked_pid) {
+        while (true) {
+            int status;
+            pid_t exited_pid = waitpid(-1, &status, 0);
+            if (exited_pid == forked_pid) exit(code);
+        }
+    }
+    else {
+        execv("/bin/bash", (char*[]){"/bin/bash", NULL});
+        printf("sysq-bash: execv failed\n");
+        exit(1);
+    }
+}
+
+unsigned char file_exists(const char* path) {
+    struct stat sb;
+    return (stat(path, &sb) == 0);
+}
+
 int main() {
+    const char* sysq_path = "/pboot/systemq/sysq";
     pid_t recovery_pid;
 
     mkdir("/dev/pts", 0755); 
@@ -66,22 +88,19 @@ int main() {
     } else if (!directory_exists_posix("/pboot/sysq-lib")) {
         printf("systemqinit: /pboot/sysq-lib missing\n");
         goto goto_fail_asserts;
+    } else if (!file_exists("/pboot/sysq-lib/sysqlib.so")) {
+        printf("systemqinit: sysqlib.so missing\n");
+        goto goto_fail_asserts;
+    } else if (!file_exists(sysq_path)) {
+        printf("systemqinit: sysq missing\n");
+        goto goto_fail_asserts;
     }
 
     goto goto_pass_asserts;
     goto_fail_asserts:
     printf("systemqinit: initialising bash\n");
-    recovery_pid = fork();
-    if (recovery_pid == 0)
-        execv("/bin/bash", (char*[]){(char*)"/bash", NULL});
-    else {
-        printf("systemqinit: bash started as pid %d\n", recovery_pid);
-        while (true) {
-            reap_zombies();
-        }
-    }
+    _onfail(1);
     goto_pass_asserts:
-    const char* sysq_path = "/pboot/systemq/sysq";
     size_t size;
 
     void* sysq_content = map_file_to_memory(sysq_path, &size);
