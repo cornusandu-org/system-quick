@@ -103,7 +103,7 @@ int main() {
 
     if (services.empty()) {
         printf("sysq: no services found\nsysq: starting bash\n");
-        _onfail(1);
+        _onfail(0);
     }
 
     ServiceMetadata* metadata = (ServiceMetadata*)mmap(NULL, services.size() * sizeof(ServiceMetadata), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);  // TODO: Make this use mmap() + Shared Memory
