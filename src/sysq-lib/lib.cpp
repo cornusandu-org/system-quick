@@ -27,6 +27,7 @@ extern "C" ServiceMetadata* parse_so(void* handle) {
     if (tmp) data->boot_priority = *(char*)tmp;
     else     data->boot_priority = 1;
 
+    // TODO: There is no way this works. Fix it.
     tmp = (void*)*(char**)dlsym(handle, "path");
     if (tmp && data->path == NULL) data->path = (const char*)tmp;
     tmp = (void*)*(char**)dlsym(handle, "bpath");

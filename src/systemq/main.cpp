@@ -11,7 +11,7 @@
 
 namespace fs = std::filesystem;
 
-enum class ServiceType : size_t {
+enum class ServiceType : unsigned char {
     Type_BIN = 1,
     Type_SO  = 2,
 };
