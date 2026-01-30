@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 
-enum class ServiceType : size_t {
+enum class ServiceType : unsigned char {
     Type_BIN = 1,
     Type_SO  = 2,
 };
@@ -39,8 +39,8 @@ extern "C" ServiceMetadata* parse_so(void* handle) {
     tmp = dlsym(handle, "type");
     if (!tmp) data->type = ServiceType::Type_BIN;
     else {
-        if (*(ServiceType*)tmp == ServiceType::Type_BIN)     data->type = ServiceType::Type_BIN;
-        else if (*(ServiceType*)tmp == ServiceType::Type_SO) data->type = ServiceType::Type_SO;
+        if (*(unsigned char*)tmp ==      (unsigned char)ServiceType::Type_BIN)     data->type = ServiceType::Type_BIN;
+        else if (*(unsigned char*)tmp == (unsigned char)ServiceType::Type_SO) data->type = ServiceType::Type_SO;
         else                                                 data->type = ServiceType::Type_BIN;     
     }
 
