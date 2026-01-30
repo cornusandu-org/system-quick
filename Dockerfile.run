@@ -7,13 +7,13 @@ ARG IS_AUTO="0"
 
 RUN apt update && \
     apt install -y --fix-missing && \
-    apt install -y build-essential
+    apt install -y build-essential nasm
 
 ENV container=docker
 
 COPY . .
 
-RUN make clean && make all
+RUN make clean && make all && make HelloWorld_service
 
 RUN mkdir -p /pboot/systemq && \
     mkdir -p /pboot/systemq-data && \
@@ -22,9 +22,13 @@ RUN mkdir -p /pboot/systemq && \
     mv systemq /pboot/systemq/sysq && \
     mv systemqinit /sbin/init && \
     mv sysqlib.so /pboot/sysq-lib/sysqlib.so && \
+    mv HelloWorld /usr/bin/helloworld && \
+    mv HelloWorld_service.so /pboot/systemq-data/ && \
     \
     chmod +x /sbin/init && \
-    chmod +x /pboot/systemq/sysq
+    chmod +x /pboot/systemq/sysq && \
+    chmod +x /usr/bin/helloworld && \
+    chmod +x /pboot/systemq-data/HelloWorld_service.so
 
 RUN if [ "$IS_AUTO" -eq "1" ]; then \
         rm /bin/bash; \

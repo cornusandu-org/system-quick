@@ -5,3 +5,5 @@ global type
 boot_priority: db 1
 path: db "/usr/bin/helloworld", 0
 type: db 1
+
+section .note.GNU-stack

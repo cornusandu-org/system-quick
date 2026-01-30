@@ -23,10 +23,31 @@ struct ServiceMetadata {
 };
 
 using parse_so_fn = ServiceMetadata*(*)(void*);
-using get_files_fn = std::vector<std::string>(*)(const char*);
+//using get_files_fn = std::vector<std::string>(*)(const char*);
 
 parse_so_fn parse_so = NULL;
-get_files_fn get_files = NULL;
+//get_files_fn get_files = NULL;
+
+
+namespace fs = std::filesystem;
+
+std::vector<std::string> get_files(const char* path) {
+    std::vector<std::string> files;
+    std::error_code ec;
+
+    // Passing 'ec' to the constructor prevents exceptions if the path is invalid
+    auto it = fs::directory_iterator(path, ec);
+    if (ec) return {}; // Return empty vector on error
+
+    for (const auto& entry : it) {
+        if (fs::is_regular_file(entry, ec)) {
+            files.push_back(entry.path().filename().string());
+        }
+    }
+
+    return files;
+}
+
 
 pid_t reap_zombies() {
     int status;
@@ -74,9 +95,9 @@ int main() {
     printf("sysq: obtained sysq_lib->parse_so at %p\n", parse_so);
     if (parse_so == NULL) _onfail(1);
 
-    get_files = (get_files_fn)dlsym(sysq_lib, "get_files");
-    printf("sysq: obtained sysq_lib->get_files at %p\n", get_files);
-    if (get_files == NULL) _onfail(1);
+    //get_files = (get_files_fn)dlsym(sysq_lib, "get_files");
+    //printf("sysq: obtained sysq_lib->get_files at %p\n", get_files);
+    //if (get_files == NULL) _onfail(1);
 
     std::vector<std::string> services = get_files("/pboot/systemq-data");
 
@@ -90,6 +111,8 @@ int main() {
 
     volatile size_t i = 0;
     for (std::string service_path : services) {
+        service_path = "/pboot/systemq-data/" + service_path;
+        printf("sysq: reading service (%s)\n", service_path.c_str());
         volatile const char* volatile new_path = NULL;
         new_path = (volatile const char* volatile) mmap(NULL, _SC_PAGESIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
         pid_t read_pid = fork();
@@ -98,9 +121,10 @@ int main() {
             waitpid(read_pid, &status, 0);
         } else {
             void* service = dlopen(service_path.c_str(), RTLD_NOW);
-            if (!service) exit(1);
+            if (!service) {printf("sysq: failed to open service %s (%s)\n", service_path.c_str(), dlerror()); exit(1);}
+            dlerror();
             ServiceMetadata* md = parse_so(service);
-            if (!md) exit(1);
+            if (!md) {printf("sysq: failed to parse service %s (dlerror: %s)\n", service_path.c_str(), dlerror()); exit(1);}
             metadata[i] = *md;
             memcpy((void*)new_path, md->path, strlen(md->path) + 1);
             metadata[i].path = (const char*)new_path;
@@ -114,13 +138,21 @@ int main() {
 
     for (size_t i = 0; i < service_no; i++) {
         ServiceMetadata* meta = metadata + i;
-        if (!meta->path) continue;
-        if (meta->boot_priority == 0) continue;
+        if (!meta->path)              { printf("sysq: skipping over NULL-path service\n"); continue; }
+        if (meta->boot_priority == 0) { printf("sysq: skipping over service (%s) due to boot_priority=0", meta->path); continue; }
         if (meta->type == ServiceType::Type_BIN) {
+            printf("sysq: executing service with binary at %s\n", meta->path);
             pid_t pid = fork();
             if (!pid) {
                 execv(meta->path, (char*[]){(char*)meta->path, NULL});
             }
+        }
+    }
+
+    while (true) {
+        pid_t pid = reap_zombies_blocking();
+        if (errno == ECHILD && pid == -1) {
+            exit(0);
         }
     }
 }

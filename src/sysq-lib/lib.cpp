@@ -7,6 +7,15 @@
 #include <cstdlib>
 #include <cstring>
 
+#if defined(__GNUC__) || defined(__clang__)
+    #define EXPORT extern "C" __attribute__((visibility("default"), aligned(64)))
+#elif defined(_MSC_VER)
+    #define EXPORT extern "C" __declspec(dllexport) __declspec(align(64))
+    #else
+    #define EXPORT extern "C"
+#endif
+
+
 enum class ServiceType : unsigned char {
     Type_BIN = 1,
     Type_SO  = 2,
@@ -18,7 +27,7 @@ struct ServiceMetadata {
     ServiceType type;
 };
 
-extern "C" ServiceMetadata* parse_so(void* handle) {
+EXPORT ServiceMetadata* parse_so(void* handle) {
     void* tmp = NULL;
     ServiceMetadata *data = (ServiceMetadata*)malloc(sizeof(ServiceMetadata));
     memset(data, 0, sizeof(ServiceMetadata));
@@ -48,21 +57,4 @@ extern "C" ServiceMetadata* parse_so(void* handle) {
     return data;
 }
 
-namespace fs = std::filesystem;
 
-extern "C" std::vector<std::string> get_files(const char* path) {
-    std::vector<std::string> files;
-    std::error_code ec;
-
-    // Passing 'ec' to the constructor prevents exceptions if the path is invalid
-    auto it = fs::directory_iterator(path, ec);
-    if (ec) return {}; // Return empty vector on error
-
-    for (const auto& entry : it) {
-        if (fs::is_regular_file(entry, ec)) {
-            files.push_back(entry.path().filename().string());
-        }
-    }
-
-    return files;
-}
