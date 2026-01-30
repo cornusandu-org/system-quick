@@ -28,11 +28,11 @@ extern "C" ServiceMetadata* parse_so(void* handle) {
     else     data->boot_priority = 1;
 
     // TODO: There is no way this works. Fix it.
-    tmp = (void*)*(char**)dlsym(handle, "path");
+    tmp = dlsym(handle, "path");
     if (tmp && data->path == NULL) data->path = (const char*)tmp;
-    tmp = (void*)*(char**)dlsym(handle, "bpath");
+    tmp = dlsym(handle, "bpath");
     if (tmp && data->path == NULL) data->path = (const char*)tmp;
-    tmp = (void*)*(char**)dlsym(handle, "loc");
+    tmp = dlsym(handle, "loc");
     if (tmp && data->path == NULL) data->path = (const char*)tmp;
 
     if (data->path == NULL) return 0x0;
